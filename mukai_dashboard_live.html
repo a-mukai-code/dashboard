@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>向井惇 営業ダッシュボード</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans JP','Inter',sans-serif;background:#F0F2F5;color:#0F172A;min-height:100vh}
+.loading{position:fixed;top:0;left:0;width:100%;height:100%;background:#F0F2F5;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999}
+.loading.hide{display:none}
+.spinner{width:36px;height:36px;border:3px solid #E2E8F0;border-top-color:#0F172A;border-radius:50%;animation:spin .8s linear infinite;margin-bottom:12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{font-size:13px;color:#64748B}
+.nav{display:flex;padding:0 20px;background:#fff;border-bottom:1px solid #E2E8F0;position:sticky;top:0;z-index:100;overflow-x:auto}
+.nb{padding:12px 16px;font-size:12px;font-weight:500;color:#94A3B8;cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;white-space:nowrap;font-family:'Noto Sans JP',sans-serif}
+.nb.on{color:#0F172A;border-bottom-color:#0F172A}
+.nb:hover:not(.on){color:#64748B}
+.pane{display:none;padding:20px;max-width:1100px;margin:0 auto}
+.pane.on{display:block}
+.hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px}
+.ht{font-size:14px;font-weight:600}
+.pills{display:flex;gap:5px;flex-wrap:wrap}
+.pill{font-size:10px;padding:3px 9px;border-radius:20px;font-weight:500;border:1px solid}
+.p-d{background:#FEF2F2;color:#B91C1C;border-color:#FECACA}
+.p-w{background:#FFFBEB;color:#C4670A;border-color:#FDE68A}
+.p-s{background:#F0FDF4;color:#0A7C52;border-color:#BBF7D0}
+.p-n{background:#F8FAFC;color:#64748B;border-color:#E2E8F0}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+@media(max-width:700px){.g4{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:repeat(2,1fr)}.g2{grid-template-columns:1fr}}
+.m{background:#fff;border:1px solid #E2E8F0;border-radius:10px;padding:12px 14px}
+.m.ok .mv{color:#0A7C52}
+.m.warn{background:#FFFBEB;border-color:#FDE68A}
+.m.danger{background:#FEF2F2;border-color:#FECACA}
+.m.acc{background:#EFF6FF;border-color:#BFDBFE}
+.ml{font-size:10px;color:#94A3B8;margin-bottom:5px}
+.m.warn .ml{color:#C4670A;opacity:.8}
+.m.danger .ml{color:#B91C1C;opacity:.8}
+.m.acc .ml{color:#1D4ED8;opacity:.8}
+.mv{font-size:22px;font-weight:600;line-height:1;color:#0F172A;font-family:'Inter',sans-serif}
+.m.warn .mv{color:#C4670A}
+.m.danger .mv{color:#B91C1C}
+.m.acc .mv{color:#1D4ED8}
+.ms{font-size:10px;color:#94A3B8;margin-top:4px}
+.m.warn .ms{color:#C4670A;opacity:.7}
+.m.danger .ms{color:#B91C1C;opacity:.7}
+.m.acc .ms{color:#1D4ED8;opacity:.7}
+.mn{font-size:10px;font-weight:500;margin-top:3px}
+.m.warn .mn{color:#C4670A}
+.m.danger .mn{color:#B91C1C}
+.prog{height:3px;background:#F1F5F9;border-radius:2px;margin-top:8px;overflow:hidden}
+.pb{height:100%;border-radius:2px}
+.pb-b{background:#3B82F6}
+.pb-g{background:#0A7C52}
+.cmp{display:flex;background:#fff;border:1px solid #E2E8F0;border-radius:10px;overflow:hidden;margin-bottom:12px}
+.cc{flex:1;padding:12px 14px;border-right:1px solid #E2E8F0}
+.cc:last-child{border-right:none}
+.ccl{font-size:10px;color:#94A3B8;margin-bottom:3px}
+.ccv{font-size:20px;font-weight:600;color:#0F172A;font-family:'Inter',sans-serif}
+.ccs{font-size:10px;color:#94A3B8;margin-top:2px}
+.cc.wa{background:#FFFBEB;border-color:#FDE68A}
+.cc.wa .ccl,.cc.wa .ccs{color:#C4670A;opacity:.8}
+.cc.wa .ccv{color:#C4670A}
+.cc.su{background:#F0FDF4;border-color:#BBF7D0}
+.cc.su .ccl,.cc.su .ccs{color:#0A7C52;opacity:.8}
+.cc.su .ccv{color:#0A7C52}
+.card{background:#fff;border:1px solid #E2E8F0;border-radius:10px;padding:12px 14px;margin-bottom:10px}
+.card.acc{background:#EFF6FF;border-color:#BFDBFE}
+.sec{font-size:10px;font-weight:600;color:#94A3B8;letter-spacing:.06em;text-transform:uppercase;margin:14px 0 8px}
+.sec:first-child{margin-top:0}
+.row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #F1F5F9}
+.row:last-child{border:none}
+.rk{font-size:11px;color:#64748B}
+.rv{font-size:12px;font-weight:500;color:#0F172A}
+.g{color:#0A7C52!important}
+.b{color:#1D4ED8!important}
+.mu{color:#94A3B8!important}
+.wa2{color:#C4670A!important}
+.da{color:#B91C1C!important}
+.bar{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.bar:last-child{margin-bottom:0}
+.bl{font-size:10px;color:#64748B;width:112px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bt{flex:1;height:10px;background:#F1F5F9;border-radius:2px;overflow:hidden}
+.bf{height:100%;border-radius:2px}
+.bf-g{background:#0A7C52}
+.bf-b{background:#3B82F6}
+.bf-m{background:#CBD5E1}
+.bp{font-size:10px;font-weight:500;width:34px;text-align:right;flex-shrink:0}
+.funnel{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
+.frow{display:flex;align-items:center;gap:8px}
+.fl{font-size:10px;color:#94A3B8;width:52px;text-align:right;flex-shrink:0}
+.fw{flex:1;height:28px;background:#F1F5F9;border-radius:4px;overflow:hidden}
+.ff{height:100%;border-radius:4px;display:flex;align-items:center;padding-left:10px}
+.ff-b{background:#3B82F6}
+.ff-g{background:#0A7C52}
+.ff-w{background:#F59E0B}
+.ft2{font-size:11px;font-weight:500;color:#fff;white-space:nowrap}
+.fn{font-size:11px;font-weight:500;color:#94A3B8;width:72px;flex-shrink:0}
+.ranks{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-bottom:8px}
+.rb{border:1px solid #E2E8F0;border-radius:7px;padding:8px 4px;text-align:center;background:#F8FAFC}
+.rb.r1{background:#F0FDF4;border-color:#BBF7D0}
+.rb.r2{background:#EFF6FF;border-color:#BFDBFE}
+.rb.big{background:#FFFBEB;border-color:#FDE68A}
+.rbn{font-size:18px;font-weight:600;color:#0F172A;font-family:'Inter',sans-serif}
+.rb.r1 .rbn{color:#0A7C52}
+.rb.r2 .rbn{color:#1D4ED8}
+.rb.big .rbn{color:#C4670A}
+.rbl{font-size:9px;color:#94A3B8;margin-top:2px}
+.alist{background:#fff;border:1px solid #E2E8F0;border-radius:10px;overflow:hidden;margin-bottom:10px}
+.ai{display:flex;align-items:center;gap:8px;padding:8px 13px;border-bottom:1px solid #F1F5F9}
+.ai:last-child{border:none}
+.an{font-size:11px;font-weight:500;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.atg{display:flex;gap:4px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end}
+.tag{font-size:9px;padding:2px 6px;border-radius:6px;border:1px solid #E2E8F0;color:#94A3B8;background:#F8FAFC;white-space:nowrap}
+.tag-src{background:#EFF6FF;border-color:#BFDBFE;color:#1D4ED8}
+.tag-s{background:#F0FDF4;border-color:#BBF7D0;color:#0A7C52}
+.tag-d{background:#FEF2F2;border-color:#FECACA;color:#B91C1C;font-weight:500}
+.tag-w{background:#FFFBEB;border-color:#FDE68A;color:#C4670A;font-weight:500}
+.pc{background:#fff;border:1px solid #E2E8F0;border-radius:10px;padding:12px 14px;margin-bottom:8px}
+.pc.rc{background:#F0FDF4;border-color:#BBF7D0}
+.pc.nd{background:#FEF2F2;border-color:#FECACA}
+.pcn{font-size:13px;font-weight:600;margin-bottom:7px;display:flex;justify-content:space-between;align-items:center}
+.pcb{font-size:10px;font-weight:500;padding:2px 8px;border-radius:8px;background:rgba(255,255,255,.6);color:#64748B}
+.pcg{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:8px}
+.pci{background:rgba(255,255,255,.4);border-radius:5px;padding:5px 8px;border:1px solid rgba(0,0,0,.06)}
+.pcil{font-size:9px;color:#94A3B8;margin-bottom:1px}
+.pciv{font-size:11px;font-weight:500}
+.pctg{display:flex;gap:5px;flex-wrap:wrap}
+.mtabs{display:flex;gap:5px;margin-bottom:12px}
+.mtb{padding:5px 13px;font-size:11px;font-weight:500;border-radius:20px;cursor:pointer;border:1px solid #E2E8F0;background:#F8FAFC;color:#94A3B8;font-family:'Noto Sans JP',sans-serif}
+.mtb.on{background:#0F172A;color:#fff;border-color:#0F172A}
+.chart-bars{display:flex;align-items:flex-end;gap:10px;height:120px;padding:0 8px;margin-bottom:8px}
+.cbcol{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1}
+.cbbar{width:28px;border-radius:3px 3px 0 0;min-height:2px}
+.cblbl{font-size:10px;color:#94A3B8;text-align:center}
+.ft{font-size:9px;color:#94A3B8;text-align:right;margin-top:6px}
+.lnk{color:#1D4ED8;text-decoration:none;font-size:10px;border:1px solid #BFDBFE;padding:2px 8px;border-radius:6px;background:#EFF6FF;margin-left:5px}
+.update-bar{background:#fff;border-bottom:1px solid #E2E8F0;padding:6px 20px;font-size:10px;color:#94A3B8;display:flex;justify-content:space-between;align-items:center}
+.refresh-btn{font-size:10px;color:#1D4ED8;background:#EFF6FF;border:1px solid #BFDBFE;padding:3px 10px;border-radius:6px;cursor:pointer;font-family:'Noto Sans JP',sans-serif}
+</style>
+</head>
+<body>
+
+<div class="loading" id="loading">
+  <div class="spinner"></div>
+  <div class="loading-text">スプレッドシートからデータを読み込んでいます...</div>
+</div>
+
+<div class="nav">
+  <button class="nb on" onclick="sw('p1',this)">今月の進捗</button>
+  <button class="nb" onclick="sw('p2',this)">アポ内訳</button>
+  <button class="nb" onclick="sw('p3',this)">成長推移</button>
+  <button class="nb" onclick="sw('p4',this)">見込み管理</button>
+  <button class="nb" onclick="sw('p5',this)">リスト打率</button>
+</div>
+
+<div class="update-bar">
+  <span id="lastUpdate">読み込み中...</span>
+  <button class="refresh-btn" onclick="loadData()">🔄 今すぐ更新</button>
+</div>
+
+<!-- P1 -->
+<div class="pane on" id="p1">
+  <div class="hdr">
+    <div class="ht">向井惇 — 営業進捗ダッシュボード</div>
+    <div class="pills" id="p1pills"></div>
+  </div>
+  <div class="g4" id="kpi-grid"></div>
+  <div class="sec">アポ率と着地想定</div>
+  <div class="cmp" id="cmp-grid"></div>
+  <div class="sec">週次ペース</div>
+  <div class="g3" id="week-grid"></div>
+  <div class="sec">アポパイプライン</div>
+  <div class="funnel" id="funnel"></div>
+  <div class="sec">アラート</div>
+  <div class="g2" id="alert-grid"></div>
+  <div class="ft" id="p1-ft"></div>
+</div>
+
+<!-- P2 -->
+<div class="pane" id="p2">
+  <div class="hdr"><div class="ht">アポ内訳</div><span class="pill p-n">T列=向井惇</span></div>
+  <div class="mtabs">
+    <button class="mtb on" onclick="sm('m6',this)">6月</button>
+    <button class="mtb" onclick="sm('m7',this)">今月</button>
+  </div>
+  <div id="m6"><div id="apo6-content"></div></div>
+  <div id="m7" style="display:none"><div id="apo7-content"></div></div>
+</div>
+
+<!-- P3 -->
+<div class="pane" id="p3">
+  <div class="hdr"><div class="ht">成長推移 — 月別サマリー</div><span class="pill p-n">T列=向井惇 累計</span></div>
+  <div id="growth-content"></div>
+</div>
+
+<!-- P4 -->
+<div class="pane" id="p4">
+  <div class="hdr">
+    <div class="ht">見込み管理</div>
+    <div class="pills" id="p4pills"></div>
+  </div>
+  <div id="prospect-content"></div>
+</div>
+
+<!-- P5 -->
+<div class="pane" id="p5">
+  <div class="hdr"><div class="ht">リスト打率 — リスト無限製造機</div><span class="pill p-n">累計ベース</span></div>
+  <div id="list-content"></div>
+</div>
+
+<script>
+// ============================================================
+// 設定：APIキーとスプレッドシートIDをここに入力
+// ============================================================
+const API_KEY = 'AIzaSyDV6mJjxKFiql4qg_VJHy8QTw3kQXNBu5Q'; // ← ここを自分のAPIキーに置き換える
+const SHEETS = {
+  nissho:  { id: '1-0ndunpM5dymeIJgQyTXdmB6_CKzT3nwdj9yIf7GkKY', gid: '1533790362' },
+  shodan:  { id: '1DV6_p9o9B4aNgGNO4OHotxoQuA99-JBlWDN8QxhSjjM', gid: '1691744742' },
+  mikomii: { id: '1DV6_p9o9B4aNgGNO4OHotxoQuA99-JBlWDN8QxhSjjM', gid: '750061157'  },
+  list:    { id: '1NHGsc-fTVXeBhv2yBLQ7tr7kldmTOLKjGiv-R3fcDbc', gid: '831376254'  },
+};
+
+// ============================================================
+// データ読み込み
+// ============================================================
+async function fetchSheet(sheetInfo) {
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetInfo.id}/values/A:AZ?key=${API_KEY}`;
+  const res = await fetch(url);
+  const data = await res.json();
+  return data.values || [];
+}
+
+async function loadData() {
+  document.getElementById('loading').classList.remove('hide');
+  document.getElementById('lastUpdate').textContent = '読み込み中...';
+  try {
+    const [nissho, shodan, mikomii, list] = await Promise.all([
+      fetchSheet(SHEETS.nissho),
+      fetchSheet(SHEETS.shodan),
+      fetchSheet(SHEETS.mikomii),
+      fetchSheet(SHEETS.list),
+    ]);
+    processData(nissho, shodan, mikomii, list);
+    const now = new Date();
+    document.getElementById('lastUpdate').textContent =
+      `最終更新: ${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
+  } catch(e) {
+    document.getElementById('lastUpdate').textContent = 'エラー: APIキーを確認してください';
+    console.error(e);
+  }
+  document.getElementById('loading').classList.add('hide');
+}
+
+// ============================================================
+// データ処理
+// ============================================================
+function processData(nisshoRows, shodanRows, mikomiiRows, listRows) {
+  const today = new Date();
+  const thisYear = today.getFullYear();
+  const thisMonth = today.getMonth() + 1;
+
+  // --- 日報 ---
+  let mukaiRow = -1;
+  for (let i = 0; i < nisshoRows.length; i++) {
+    if (nisshoRows[i][0] === '向井') { mukaiRow = i; break; }
+  }
+  const totalAction = mukaiRow >= 0 ? parseInt(nisshoRows[mukaiRow][3]) || 0 : 142;
+  const existingCo  = mukaiRow >= 0 ? parseInt(nisshoRows[mukaiRow+1]?.[3]) || 0 : 45;
+  const newCo       = mukaiRow >= 0 ? parseInt(nisshoRows[mukaiRow+2]?.[3]) || 0 : 80;
+  const targetAction = mukaiRow >= 0 ? parseInt(nisshoRows[mukaiRow][2]) || 1070 : 1070;
+
+  // --- 商談数管理 ---
+  const dataRows = shodanRows.slice(3);
+  const mukai = dataRows.filter(r => r[19] === '向井惇');
+  const mukaiThisMonth = mukai.filter(r => {
+    if (!r[22]) return false;
+    const d = new Date(r[22]);
+    return d.getFullYear() === thisYear && d.getMonth()+1 === thisMonth;
+  });
+  const mukai6 = mukai.filter(r => {
+    if (!r[22]) return false;
+    const d = new Date(r[22]);
+    return d.getFullYear() === 2026 && d.getMonth()+1 === 6;
+  });
+
+  const apo7 = mukaiThisMonth.length;
+  const apo6 = mukai6.length;
+  const apoRateNew = newCo > 0 ? (apo7 / newCo * 100) : 0;
+  const apoRateAll = totalAction > 0 ? (apo7 / totalAction * 100) : 0;
+  const forecastCurrent = Math.round(638 * apoRateNew / 100);
+  const forecastTarget = 35;
+  const daysWorked = 3; // TODO: 日報から自動計算
+  const weekPace = daysWorked > 0 ? (apo7 / daysWorked * 5) : 0;
+  const monthPace = daysWorked > 0 ? Math.round(apo7 / daysWorked * 22) : 0;
+
+  // ランク集計（今月）
+  const rankCount7 = countByKey(mukaiThisMonth, 0);
+  const rankCount6 = countByKey(mukai6, 0);
+  const svcCount6  = countByKey(mukai6, 7);
+  const listCount6 = countByKey(mukai6, 26);
+
+  // --- 見込み管理 ---
+  const miData = mikomiiRows.slice(5);
+  const mukaiCos = new Set(mukai.map(r => (r[2]||'').trim()));
+  const prospects = miData.filter(r => {
+    const name = (r[1]||'').trim();
+    if (!mukaiCos.has(name)) return false;
+    if (name.includes('四季舎') && (r[2]||'').includes('2025')) return false;
+    return true;
+  });
+
+  // NA日チェック
+  const naAlerts = [];
+  prospects.forEach(r => {
+    const na = r[17];
+    if (!na) return;
+    const naDate = new Date(na);
+    if (isNaN(naDate)) return;
+    const daysLeft = Math.round((naDate - today) / 86400000);
+    if (daysLeft <= 7) naAlerts.push({ name: r[1], days: daysLeft, na });
+  });
+
+  // --- 描画 ---
+  renderP1(totalAction, newCo, existingCo, apo7, targetAction, apoRateNew, apoRateAll,
+           forecastCurrent, forecastTarget, weekPace, monthPace, naAlerts, thisMonth);
+  renderP2(mukai6, mukai, rankCount6, rankCount7, svcCount6, listCount6, mukaiThisMonth);
+  renderP3(mukai);
+  renderP4(prospects, mukai, naAlerts, today);
+  renderP5(listRows);
+}
+
+function countByKey(rows, col) {
+  const counts = {};
+  rows.forEach(r => {
+    const k = r[col] || '不明';
+    counts[k] = (counts[k] || 0) + 1;
+  });
+  return counts;
+}
+
+function pct(v, total) { return total > 0 ? Math.round(v/total*100) : 0; }
+
+// ============================================================
+// P1: 今月の進捗
+// ============================================================
+function renderP1(total, newCo, existing, apo, targetAction, apoRateNew, apoRateAll,
+                  forecastCurrent, forecastTarget, weekPace, monthPace, naAlerts, thisMonth) {
+  const pctTotal   = pct(total, targetAction);
+  const pctNew     = pct(newCo, 638);
+  const pctExist   = pct(existing, 372);
+  const pctApo     = pct(apo, forecastTarget);
+
+  document.getElementById('p1pills').innerHTML = `
+    ${naAlerts.length > 0 ? `<span class="pill p-d">NA超過・警告 ${naAlerts.length}件</span>` : ''}
+    <span class="pill p-n">${thisMonth}月 進捗</span>`;
+
+  document.getElementById('kpi-grid').innerHTML = `
+    <div class="m"><div class="ml">総アクション</div><div class="mv">${total}</div><div class="ms">目標 ${targetAction}件</div><div class="prog"><div class="pb pb-b" style="width:${pctTotal}%"></div></div><div class="ms" style="margin-top:3px">${pctTotal}%達成</div></div>
+    <div class="m"><div class="ml">新規企業</div><div class="mv">${newCo}</div><div class="ms">目標 638社</div><div class="prog"><div class="pb pb-b" style="width:${pctNew}%"></div></div><div class="ms" style="margin-top:3px">${pctNew}%達成</div></div>
+    <div class="m"><div class="ml">既存・追いかけ</div><div class="mv">${existing}</div><div class="ms">目標 372社</div><div class="prog"><div class="pb pb-b" style="width:${pctExist}%"></div></div><div class="ms" style="margin-top:3px">${pctExist}%達成</div></div>
+    <div class="m ok"><div class="ml">アポ獲得</div><div class="mv">${apo}</div><div class="ms">目標 ${forecastTarget}件</div><div class="prog"><div class="pb pb-g" style="width:${Math.min(pctApo,100)}%"></div></div><div class="ms" style="margin-top:3px">${pctApo}%達成</div></div>`;
+
+  document.getElementById('cmp-grid').innerHTML = `
+    <div class="cc"><div class="ccl">新規アポ率（現在）</div><div class="ccv" style="color:#0A7C52">${apoRateNew.toFixed(2)}%</div><div class="ccs">${apo}件 ÷ ${newCo}社</div></div>
+    <div class="cc"><div class="ccl">全体アポ率（現在）</div><div class="ccv">${apoRateAll.toFixed(2)}%</div><div class="ccs">${apo}件 ÷ ${total}件</div></div>
+    <div class="cc wa"><div class="ccl">現状ペース着地</div><div class="ccv">${forecastCurrent}件</div><div class="ccs">638社×${apoRateNew.toFixed(2)}%</div></div>
+    <div class="cc su"><div class="ccl">目標着地想定</div><div class="ccv">${forecastTarget}件</div><div class="ccs">638社×5.45%（6月実績）</div></div>`;
+
+  document.getElementById('week-grid').innerHTML = `
+    <div class="m acc"><div class="ml">今週ペース</div><div class="mv">${weekPace.toFixed(1)}件/週</div><div class="ms">${apo}件÷3日×5日</div></div>
+    <div class="m warn"><div class="ml">このペースの月末着地</div><div class="mv">${monthPace}件</div><div class="ms">${apo}件÷3日×22日</div></div>
+    <div class="m"><div class="ml">目標ペース</div><div class="mv">8件/週</div><div class="ms">${forecastTarget}件÷4.4週</div></div>`;
+
+  const funnelPctNew = pct(newCo, total);
+  const funnelPctApo = total > 0 ? Math.max(1, Math.round(apo/total*100)) : 1;
+  document.getElementById('funnel').innerHTML = `
+    <div class="frow"><div class="fl">架電</div><div class="fw"><div class="ff ff-b" style="width:100%"><span class="ft2">${total}件</span></div></div><div class="fn">100%</div></div>
+    <div class="frow"><div class="fl">新規</div><div class="fw"><div class="ff ff-b" style="width:${funnelPctNew}%"><span class="ft2">${newCo}社</span></div></div><div class="fn">${funnelPctNew}%</div></div>
+    <div class="frow"><div class="fl">アポ</div><div class="fw"><div class="ff ff-g" style="width:${Math.max(funnelPctApo,3)}%"><span class="ft2">${apo}件</span></div></div><div class="fn" style="color:#0A7C52">${apoRateNew.toFixed(1)}%</div></div>`;
+
+  const alertHtml = naAlerts.length > 0
+    ? naAlerts.map(a => `<div class="m danger"><div class="ml">NA${a.days < 0 ? '期限超過' : '期限まで'+a.days+'日'}</div><div class="mv">${a.name.replace('株式会社','').replace('有限会社','')}</div><div class="ms">NA日: ${a.na}</div><div class="mn">早急にフォロー必要</div></div>`).join('')
+    : '<div class="m"><div class="ml">NAアラート</div><div class="mv" style="color:#0A7C52">なし</div><div class="ms">期限7日以内の案件なし</div></div>';
+
+  document.getElementById('alert-grid').innerHTML = alertHtml +
+    `<div class="m warn"><div class="ml">今月入金予定</div><div class="mv">確認中</div><div class="ms">見込み管理タブを確認</div></div>`;
+
+  document.getElementById('p1-ft').innerHTML = `最終更新: リアルタイム取得
+    <a class="lnk" href="https://docs.google.com/spreadsheets/d/1-0ndunpM5dymeIJgQyTXdmB6_CKzT3nwdj9yIf7GkKY" target="_blank">日報</a>
+    <a class="lnk" href="https://docs.google.com/spreadsheets/d/1DV6_p9o9B4aNgGNO4OHotxoQuA99-JBlWDN8QxhSjjM" target="_blank">商談数管理</a>
+    <a class="lnk" href="https://docs.google.com/spreadsheets/d/1DV6_p9o9B4aNgGNO4OHotxoQuA99-JBlWDN8QxhSjjM/edit#gid=750061157" target="_blank">見込み管理</a>`;
+}
+
+// ============================================================
+// P2: アポ内訳
+// ============================================================
+function renderP2(mukai6, mukaiAll, rankCount6, rankCount7, svcCount6, listCount6, mukai7) {
+  const ranks = ['リードランク1','リードランク2','リードランク3','しのぐリード','大手企業'];
+  const rankLabels = ['ランク1','ランク2','ランク3','しのぐ','大手'];
+  const rankClasses = ['r1','r2','','','big'];
+
+  function rankGrid(counts) {
+    return `<div class="ranks">${ranks.map((r,i)=>`
+      <div class="rb ${rankClasses[i]}"><div class="rbn">${counts[r]||0}</div><div class="rbl">${rankLabels[i]}</div></div>`).join('')}</div>`;
+  }
+
+  function barList(counts, maxVal) {
+    return Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,7).map(([k,v])=>`
+      <div class="bar"><div class="bl">${k}</div><div class="bt"><div class="bf bf-b" style="width:${Math.round(v/maxVal*100)}%"></div></div><div class="bp b">${v}件</div></div>`).join('');
+  }
+
+  const maxSvc6 = Math.max(...Object.values(svcCount6), 1);
+  const maxList6 = Math.max(...Object.values(listCount6), 1);
+
+  document.getElementById('apo6-content').innerHTML = `
+    <div class="sec">リードランク</div>
+    <div class="card">${rankGrid(rankCount6)}<div style="font-size:10px;color:#94A3B8">Want（ランク1+2）: ${(rankCount6['リードランク1']||0)+(rankCount6['リードランク2']||0)}件</div></div>
+    <div class="g2">
+      <div>
+        <div class="sec">提案サービス（H列）</div>
+        <div class="card">${barList(svcCount6, maxSvc6)}</div>
+      </div>
+      <div>
+        <div class="sec">リスト施策（AA列）</div>
+        <div class="card">${barList(listCount6, maxList6)}</div>
+      </div>
+    </div>
+    <div class="sec">企業別一覧</div>
+    <div class="alist">${mukai6.map(r=>`
+      <div class="ai"><div class="an">${r[2]||''}</div><div class="atg">
+        <span class="tag tag-src">${r[26]||'不明'}</span>
+        <span class="tag">${r[0]||''}</span>
+        <span class="tag">${r[7]||'未実施'}</span>
+        ${r[3]&&r[3].includes('没')?'<span class="tag tag-d">没</span>':''}
+        ${r[3]&&r[3].includes('NA確定')?'<span class="tag tag-s">NA確定</span>':''}
+      </div></div>`).join('')}</div>`;
+
+  const maxSvc7 = Math.max(...Object.values(countByKey(mukai7,7)),1);
+  const maxList7 = Math.max(...Object.values(countByKey(mukai7,26)),1);
+  document.getElementById('apo7-content').innerHTML = `
+    <div class="sec">リードランク（今月）</div>
+    <div class="card">${rankGrid(rankCount7)}<div style="font-size:10px;color:#94A3B8">Want（ランク1+2）: ${(rankCount7['リードランク1']||0)+(rankCount7['リードランク2']||0)}件</div></div>
+    <div class="g2">
+      <div>
+        <div class="sec">提案サービス</div>
+        <div class="card">${barList(countByKey(mukai7,7), maxSvc7)}</div>
+      </div>
+      <div>
+        <div class="sec">リスト施策</div>
+        <div class="card">${barList(countByKey(mukai7,26), maxList7)}</div>
+      </div>
+    </div>
+    <div class="sec">企業別一覧</div>
+    <div class="alist">${mukai7.map(r=>`
+      <div class="ai"><div class="an">${r[2]||''}</div><div class="atg">
+        <span class="tag tag-src">${r[26]||'不明'}</span>
+        <span class="tag">${r[0]||''}</span>
+        <span class="tag">${r[22]?new Date(r[22]).getMonth()+1+'/'+new Date(r[22]).getDate():''}</span>
+      </div></div>`).join('')}</div>`;
+}
+
+// ============================================================
+// P3: 成長推移
+// ============================================================
+function renderP3(mukai) {
+  const monthly = {};
+  mukai.forEach(r => {
+    if (!r[22]) return;
+    const d = new Date(r[22]);
+    if (isNaN(d)) return;
+    const key = `${d.getFullYear()}-${d.getMonth()+1}`;
+    monthly[key] = (monthly[key]||[]);
+    monthly[key].push(r);
+  });
+
+  const months = ['2026-4','2026-5','2026-6','2026-7'];
+  const labels = ['4月','5月','6月','7月'];
+  const counts = months.map(m => (monthly[m]||[]).length);
+  const maxCount = Math.max(...counts, 1);
+
+  const bars = months.map((m,i) => {
+    const h = Math.round(counts[i]/maxCount*99)+1;
+    const isThis = m === '2026-7';
+    return `<div class="cbcol">
+      <div style="font-size:9px;color:${isThis?'#C4670A':'#94A3B8'}">${counts[i]}件${isThis?'*':''}</div>
+      <div class="cbbar" style="height:${h}px;background:${isThis?'#F59E0B':'#3B82F6'};opacity:${isThis?.7:1}"></div>
+      <div class="cblbl">${labels[i]}</div>
+    </div>`;
+  }).join('');
+
+  const tableRows = months.map((m,i) => {
+    const rows = monthly[m]||[];
+    const want = rows.filter(r=>r[0]==='リードランク1'||r[0]==='リードランク2').length;
+    const sc = rows.filter(r=>(r[7]||'').includes('アライアンス')).length;
+    const isThis = m==='2026-7';
+    return `<div class="row" style="${isThis?'background:#F0FDF4;margin:0 -13px;padding:6px 13px':''}">
+      <span class="rk ${isThis?'g':''}" style="${isThis?'font-weight:500':''}">  ${labels[i]}${isThis?'（今月）':''}</span>
+      <span style="display:flex;gap:16px">
+        <span class="rv ${isThis?'g':''}" style="width:48px;text-align:right">${rows.length}件</span>
+        <span class="rv ${want/Math.max(rows.length,1)>.7?'g':'mu'}" style="width:52px;text-align:right">${rows.length?Math.round(want/rows.length*100):0}%</span>
+        <span class="rv b" style="width:52px;text-align:right">${rows.length?Math.round(sc/rows.length*100):0}%</span>
+      </span>
+    </div>`;
+  }).join('');
+
+  document.getElementById('growth-content').innerHTML = `
+    <div class="sec">月別アポ数の推移</div>
+    <div class="card">
+      <div class="chart-bars">${bars}</div>
+      <div style="font-size:9px;color:#94A3B8;text-align:center">*今月は今日時点</div>
+    </div>
+    <div class="sec">月別詳細</div>
+    <div class="card">
+      <div class="row" style="font-weight:600"><span class="rk" style="color:#0F172A">月</span><span style="display:flex;gap:16px"><span style="font-size:11px;color:#94A3B8;width:48px;text-align:right">アポ数</span><span style="font-size:11px;color:#94A3B8;width:52px;text-align:right">Want率</span><span style="font-size:11px;color:#94A3B8;width:52px;text-align:right">SC比率</span></span></div>
+      ${tableRows}
+      <div class="row" style="background:#F8FAFC"><span class="rk" style="font-weight:500">累計</span><span style="display:flex;gap:16px"><span class="rv b" style="width:48px;text-align:right">${mukai.length}件</span><span class="rv" style="width:52px;text-align:right">—</span><span class="rv" style="width:52px;text-align:right">—</span></span></div>
+    </div>`;
+}
+
+// ============================================================
+// P4: 見込み管理
+// ============================================================
+function renderP4(prospects, mukai, naAlerts, today) {
+  const received = prospects.filter(r => (r[8]||'').includes('100%'));
+  const active = prospects.filter(r => !(r[8]||'').includes('100%'));
+
+  function toNum(v) {
+    if (!v) return 0;
+    return parseFloat(String(v).replace(/[¥,]/g,'')) || 0;
+  }
+
+  const receivedTotal = received.reduce((s,r)=>s+toNum(r[16]),0);
+  const activeTotal = active.reduce((s,r)=>s+toNum(r[16]),0);
+
+  document.getElementById('p4pills').innerHTML = `
+    ${naAlerts.length>0?`<span class="pill p-d">NA超過 ${naAlerts.length}件</span>`:''}
+    <span class="pill p-s">受注済 ${received.length}社</span>`;
+
+  function prospectCard(r, isReceived, isND) {
+    const mukaiInfo = mukai.find(m=>(m[2]||'').trim()===(r[1]||'').trim());
+    const listSrc = mukaiInfo ? (mukaiInfo[26]||'不明') : '不明';
+    const apoDate = mukaiInfo && mukaiInfo[22] ? new Date(mukaiInfo[22]).toLocaleDateString('ja-JP') : '不明';
+    const naDate = r[17];
+    let naDiff = '';
+    if (naDate) {
+      const d = new Date(naDate);
+      const diff = Math.round((d-today)/86400000);
+      if (diff <= 0) naDiff = `<span class="tag tag-d">期限超過 ${diff}日</span>`;
+      else if (diff <= 7) naDiff = `<span class="tag tag-w">あと${diff}日</span>`;
+    }
+    const cls = isReceived ? 'rc' : isND ? 'nd' : '';
+    return `<div class="pc ${cls}">
+      <div class="pcn"><span>${r[1]||''}</span><span class="pcb">${r[8]||''}</span></div>
+      <div class="pcg">
+        <div class="pci"><div class="pcil">入金予定</div><div class="pciv">${r[2]||'—'}</div></div>
+        <div class="pci"><div class="pcil">提案サービス</div><div class="pciv">${r[11]||'—'}</div></div>
+        <div class="pci"><div class="pcil">将来収益</div><div class="pciv">${r[16]||'—'}</div></div>
+        <div class="pci"><div class="pcil">初期費用</div><div class="pciv">${r[13]||'—'}</div></div>
+        <div class="pci"><div class="pcil">月額</div><div class="pciv">${r[14]||'—'}</div></div>
+        <div class="pci"><div class="pcil">NA日</div><div class="pciv">${r[17]||'—'}</div></div>
+      </div>
+      <div class="pctg">
+        <span class="tag tag-src">${listSrc}</span>
+        <span class="tag">アポ取得 ${apoDate}</span>
+        ${naDiff}
+      </div>
+    </div>`;
+  }
+
+  document.getElementById('prospect-content').innerHTML = `
+    <div class="sec">金額サマリー</div>
+    <div class="g3">
+      <div class="m ok"><div class="ml">受注済 将来収益</div><div class="mv" style="font-size:16px">¥${receivedTotal.toLocaleString()}</div><div class="ms">${received.length}社</div></div>
+      <div class="m warn"><div class="ml">活動中 潜在収益</div><div class="mv" style="font-size:16px">¥${activeTotal.toLocaleString()}</div><div class="ms">${active.length}社合計</div></div>
+      <div class="m"><div class="ml">見込み転換率</div><div class="mv" style="font-size:16px">${mukai.length>0?(prospects.length/mukai.length*100).toFixed(1):0}%</div><div class="ms">${prospects.length}社 / ${mukai.length}アポ</div></div>
+    </div>
+    <div class="sec">受注済</div>
+    ${received.map(r=>prospectCard(r,true,false)).join('')}
+    ${naAlerts.length>0?`<div class="sec">NA期限超過 — 要対応</div>${active.filter(r=>{const d=new Date(r[17]);return !isNaN(d)&&Math.round((d-today)/86400000)<=0;}).map(r=>prospectCard(r,false,true)).join('')}`:''}
+    <div class="sec">活動中</div>
+    ${active.filter(r=>{const d=new Date(r[17]);return isNaN(d)||Math.round((d-today)/86400000)>0;}).map(r=>prospectCard(r,false,false)).join('')}`;
+}
+
+// ============================================================
+// P5: リスト打率
+// ============================================================
+function renderP5(listRows) {
+  if (!listRows || listRows.length < 2) {
+    document.getElementById('list-content').innerHTML = '<div class="card">データを読み込めませんでした</div>';
+    return;
+  }
+  const headers = listRows[0];
+  const nameCol = headers.indexOf('企業名');
+  const srcCol  = headers.indexOf('収集元');
+  const stCol   = headers.indexOf('ステータス');
+  if (nameCol<0||srcCol<0||stCol<0) return;
+
+  const rows = listRows.slice(1);
+  const exclude = ['対象外','直近・会員',''];
+
+  function classify(src) {
+    if (!src) return 'その他';
+    if (/展示会|EXPO|expo|フードセレクション|商談会|コンクール|物産|北海道産品|グルメ|食の魅力|農と食|フードアクション|ふるさと食品|地方銀行/.test(src)) return '展示会・コンクール系';
+    if (/リクナビ|doda|求人/.test(src)) return '求人系';
+    return 'その他';
+  }
+
+  const catStats = {'展示会・コンクール系':{called:0,apo:0},'求人系':{called:0,apo:0},'その他':{called:0,apo:0}};
+  const srcStats = {};
+
+  rows.forEach(r => {
+    const src = r[srcCol]||'';
+    const st  = r[stCol]||'';
+    const cat = classify(src);
+    if (!exclude.includes(st) && st) {
+      catStats[cat].called++;
+      if (st==='アポ') catStats[cat].apo++;
+      if (!srcStats[src]) srcStats[src]={called:0,apo:0};
+      srcStats[src].called++;
+      if (st==='アポ') srcStats[src].apo++;
+    }
+  });
+
+  const catBars = Object.entries(catStats).map(([k,v])=>{
+    const rate = v.called>0?(v.apo/v.called*100).toFixed(1):0;
+    return `<div class="bar"><div class="bl">${k}</div><div class="bt"><div class="bf bf-g" style="width:${Math.min(rate*10,100)}%"></div></div><div class="bp g">${rate}%</div></div>
+    <div style="font-size:10px;color:#94A3B8;padding-left:120px;margin:-3px 0 8px">架電${v.called}社 / アポ${v.apo}件</div>`;
+  }).join('');
+
+  const srcRows = Object.entries(srcStats)
+    .filter(([k,v])=>v.apo>0)
+    .sort((a,b)=>b[1].apo/b[1].called-a[1].apo/a[1].called)
+    .slice(0,10)
+    .map(([k,v])=>{
+      const rate = (v.apo/v.called*100).toFixed(1);
+      const shortName = k.replace('【済】営業精査リスト（','').replace('） - リスト','').replace(' - 作業シート','').substring(0,20);
+      return `<div class="row"><span class="rk">${shortName}</span><span style="display:flex;gap:8px;align-items:center"><span style="font-size:10px;color:#94A3B8">${v.called}社</span><span class="rv g">${rate}% / ${v.apo}アポ</span></span></div>`;
+    }).join('');
+
+  document.getElementById('list-content').innerHTML = `
+    <div class="sec">カテゴリ別</div>
+    <div class="card">${catBars}</div>
+    <div class="sec">個別リスト打率（高い順）</div>
+    <div class="card">${srcRows}</div>
+    <div class="card acc"><div style="font-size:11px;color:#1D4ED8;line-height:1.7">受賞・選考系リストが最高打率。同カテゴリのリスト発掘を優先すると効率が上がる。</div></div>`;
+}
+
+// ============================================================
+// タブ切り替え
+// ============================================================
+function sw(id,btn){
+  document.querySelectorAll('.pane').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.nb').forEach(b=>b.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+  btn.classList.add('on');
+}
+function sm(id,btn){
+  document.getElementById('m6').style.display='none';
+  document.getElementById('m7').style.display='none';
+  document.querySelectorAll('.mtb').forEach(b=>b.classList.remove('on'));
+  document.getElementById(id).style.display='block';
+  btn.classList.add('on');
+}
+
+// 起動時に読み込み
+loadData();
+</script>
+</body>
+</html>
